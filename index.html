@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Football Career Simulation Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#0b0f14; color:#eee; padding:20px; }
+    h1, h2, h3 { color:#00ff99; }
+    .card { background:#141a22; padding:15px; border-radius:12px; margin-bottom:15px; box-shadow:0 0 10px rgba(0,255,153,.1); }
+    button { padding:8px 14px; margin:5px 5px 0 0; background:#00ff99; border:none; border-radius:6px; cursor:pointer; }
+    button.secondary { background:#444; color:#fff; }
+    select, input { padding:7px; margin:6px 0; width:100%; border-radius:6px; border:none; }
+    .stat { display:flex; justify-content:space-between; }
+  </style>
+</head>
+<body>
+
+<h1>⚽ Football Career Mode – AI Simulation</h1>
+
+<div class="card" id="setup">
+  <h2>Create Player</h2>
+  <input id="name" placeholder="Player Name" />
+  <input id="age" type="number" placeholder="Age (16–20)" />
+  <input id="nation" placeholder="Nationality" />
+  <select id="position">
+    <option>ST</option><option>LW</option><option>RW</option>
+    <option>CAM</option><option>CM</option><option>CDM</option>
+  </select>
+  <button onclick="startCareer()">Start Career</button>
+</div>
+
+<div class="card" id="game" style="display:none;"></div>
+
+<script>
+let season = 1;
+let player = {};
+let currentClub = "";
+
+const clubsByOvr = [
+  { min: 50, max: 60, clubs: ["Luton Town","Almeria","Clermont","Darmstadt"] },
+  { min: 61, max: 70, clubs: ["Leeds United","Real Betis","Fiorentina","Nice"] },
+  { min: 71, max: 80, clubs: ["Tottenham","AC Milan","Atletico Madrid","Dortmund"] },
+  { min: 81, max: 99, clubs: ["Real Madrid","Manchester City","PSG","Barcelona"] }
+];
+
+function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function startCareer(){
+  player = {
+    name: name.value,
+    age: parseInt(age.value),
+    nation: nation.value,
+    position: position.value,
+    ovr: rand(55,65),
+    morale: 70,
+    fitness: 80,
+    potential: rand(75,92)
+  };
+
+  currentClub = getClub(player.ovr);
+  setup.style.display = "none";
+  game.style.display = "block";
+  simulateSeason();
+}
+
+function getClub(ovr){
+  return clubsByOvr.find(c => ovr>=c.min && ovr<=c.max).clubs[rand(0,3)];
+}
+
+function simulateSeason(){
+  let playtimeFactor = player.morale/100;
+  let goals = Math.max(0, Math.floor((player.ovr/8)*playtimeFactor + rand(-2,3)));
+  let assists = Math.max(0, Math.floor((player.ovr/12)*playtimeFactor + rand(-1,2)));
+
+  let growth = (player.ovr < player.potential) ? rand(0,3) : rand(-2,1);
+  let moraleEffect = player.morale > 75 ? 1 : player.morale < 50 ? -1 : 0;
+
+  player.ovr += growth + moraleEffect;
+  player.fitness = Math.max(60, player.fitness - rand(5,10));
+
+  let offers = [];
+  if(player.ovr >= 68) offers.push(getClub(player.ovr));
+  if(player.ovr >= 75 && goals > 10) offers.push(getClub(player.ovr));
+  if(player.ovr >= 82 && goals > 15) offers.push(getClub(player.ovr));
+
+  game.innerHTML = `
+    <h2>Season ${season}</h2>
+    <p><b>Club:</b> ${currentClub}</p>
+    <div class="stat"><span>OVR</span><span>${player.ovr}</span></div>
+    <div class="stat"><span>Goals</span><span>${goals}</span></div>
+    <div class="stat"><span>Assists</span><span>${assists}</span></div>
+    <div class="stat"><span>Morale</span><span>${player.morale}</span></div>
+    <div class="stat"><span>Fitness</span><span>${player.fitness}</span></div>
+    <h3>Transfer Offers</h3>
+    ${offers.length ? offers.map(c=>`<button onclick="joinClub('${c}')">Join ${c}</button>`).join("") : "No offers"}
+    <br/><button class="secondary" onclick="stayClub()">Stay at ${currentClub}</button>
+  `;
+}
+
+function joinClub(club){
+  currentClub = club;
+  player.morale += rand(5,10);
+  player.fitness += rand(5,10);
+  nextSeason();
+}
+
+function stayClub(){
+  player.morale += rand(-5,5);
+  nextSeason();
+}
+
+function nextSeason(){
+  season++;
+  player.age++;
+  if(season > 10){
+    game.innerHTML = `<h2>Career Complete</h2>
+      <p>${player.name} retired at age ${player.age} with OVR ${player.ovr}</p>`;
+    return;
+  }
+  simulateSeason();
+}
+</script>
+
+</body>
+</html>
