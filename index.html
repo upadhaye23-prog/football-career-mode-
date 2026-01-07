@@ -5,19 +5,25 @@
   <title>Football Career Simulation Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial, sans-serif; background:#0b0f14; color:#eee; padding:20px; }
-    h1, h2, h3 { color:#00ff99; }
-    .card { background:#141a22; padding:15px; border-radius:12px; margin-bottom:15px; box-shadow:0 0 10px rgba(0,255,153,.1); }
-    button { padding:8px 14px; margin:5px 5px 0 0; background:#00ff99; border:none; border-radius:6px; cursor:pointer; }
-    button.secondary { background:#444; color:#fff; }
-    select, input { padding:7px; margin:6px 0; width:100%; border-radius:6px; border:none; }
-    .stat { display:flex; justify-content:space-between; }
-  </style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff}
+header{padding:20px;text-align:center;background:rgba(0,0,0,.4)}
+h1{margin:0;color:#00ffcc}
+.container{max-width:900px;margin:auto;padding:20px}
+.card{background:rgba(0,0,0,.45);border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+input,select{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px}
+button{padding:10px 18px;border-radius:12px;border:none;background:#00ffcc;font-weight:bold;cursor:pointer;margin-top:15px}
+button.secondary{background:#555;color:#fff}
+.stat{display:flex;justify-content:space-between;margin:6px 0}
+.badge{display:inline-block;padding:6px 12px;border-radius:20px;background:#ffd700;color:#000;font-weight:bold;margin-top:10px}
+.season-win{background:#1abc9c;color:#000;padding:10px;border-radius:12px;margin-top:10px;font-weight:bold}
+</style>
 </head>
 <body>
-
-<h1>⚽ Football Career Mode – AI Simulation</h1>
-
+<header>
+<h1>⚽ Football Career Simulation</h1>
+<p>Decisions Shape Destiny</p>
+</header>
+<div class="container">
 <div class="card" id="setup">
   <h2>Create Player</h2>
   <input id="name" placeholder="Player Name" />
@@ -34,6 +40,7 @@
 
 <script>
 let season = 1;
+let seasonWinners = [];
 let player = {};
 let currentClub = "";
 
@@ -84,17 +91,22 @@ function simulateSeason(){
   if(player.ovr >= 75 && goals > 10) offers.push(getClub(player.ovr));
   if(player.ovr >= 82 && goals > 15) offers.push(getClub(player.ovr));
 
-  game.innerHTML = `
-    <h2>Season ${season}</h2>
-    <p><b>Club:</b> ${currentClub}</p>
-    <div class="stat"><span>OVR</span><span>${player.ovr}</span></div>
-    <div class="stat"><span>Goals</span><span>${goals}</span></div>
-    <div class="stat"><span>Assists</span><span>${assists}</span></div>
-    <div class="stat"><span>Morale</span><span>${player.morale}</span></div>
-    <div class="stat"><span>Fitness</span><span>${player.fitness}</span></div>
-    <h3>Transfer Offers</h3>
-    ${offers.length ? offers.map(c=>`<button onclick="joinClub('${c}')">Join ${c}</button>`).join("") : "No offers"}
-    <br/><button class="secondary" onclick="stayClub()">Stay at ${currentClub}</button>
+  let winnerClub = getClub(rand(70,90));
+seasonWinners.push({season, club:winnerClub});
+
+game.innerHTML = `
+<h2>Season ${season}</h2>
+<div class="badge">League Winner: ${winnerClub}</div>
+<p><b>Club:</b> ${currentClub}</p>
+<div class="stat"><span>OVR</span><span>${player.ovr}</span></div>
+<div class="stat"><span>Goals</span><span>${goals}</span></div>
+<div class="stat"><span>Assists</span><span>${assists}</span></div>
+<div class="stat"><span>Morale</span><span>${player.morale}</span></div>
+<div class="stat"><span>Fitness</span><span>${player.fitness}</span></div>
+<h3>Transfer Offers</h3>
+${offers.length ? offers.map(c=>`<button onclick=\"joinClub('${c}')\">Join ${c}</button>`).join('') : '<p>No offers</p>'}
+<br><button class="secondary" onclick="stayClub()">Stay at ${currentClub}</button>
+`;
   `;
 }
 
@@ -113,10 +125,13 @@ function stayClub(){
 function nextSeason(){
   season++;
   player.age++;
-  if(season > 10){
-    game.innerHTML = `<h2>Career Complete</h2>
-      <p>${player.name} retired at age ${player.age} with OVR ${player.ovr}</p>`;
-    return;
+  if(season>10){
+let history = seasonWinners.map(w=>`<div class='season-win'>Season ${w.season}: ${w.club}</div>`).join('');
+game.innerHTML = `<h2>🏆 Career Summary</h2>
+<p><b>${player.name}</b> retired at age ${player.age}</p>
+<p>Final OVR: ${player.ovr}</p>
+<h3>League Winners by Season</h3>${history}`;
+return;
   }
   simulateSeason();
 }
